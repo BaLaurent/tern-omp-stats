@@ -1,0 +1,14 @@
+schema = 1
+id = "omp-stats"
+name = "OMP Stats"
+version = "0.1.0"
+description = "Dashboard of the usage statistics omp keeps in ~/.omp/stats.db: cost, tokens, models, projects, performance, tools and sessions."
+icon = "list"
+host = "host.luau"
+styles = ["stats.css"]
+
+[[blocks]]
+id = "dashboard"
+title = "OMP Stats"
+icon = "list"
+palette = true

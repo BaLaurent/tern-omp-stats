@@ -1,0 +1,85 @@
+/* OMP Stats: tiles, bar and grid around Tern's native table / chart components. Theme variables only. */
+
+[data-surface='plugin.omp-stats.dashboard'] .os-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 2px 10px;
+	margin-bottom: 10px;
+	border-bottom: 1px solid var(--l2);
+	font-family: var(--sans);
+}
+[data-surface='plugin.omp-stats.dashboard'] .os-title {
+	font-weight: 700;
+	font-size: 15px;
+	margin-right: 4px;
+	color: var(--t1);
+}
+[data-surface='plugin.omp-stats.dashboard'] .os-group {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+[data-surface='plugin.omp-stats.dashboard'] .os-btn {
+	font-family: var(--sans);
+	font-size: 12px;
+	padding: 5px 10px;
+	border: 1px solid var(--l3);
+	border-radius: var(--r-ctl);
+	background: var(--l1);
+	color: var(--t1);
+	white-space: nowrap;
+}
+[data-surface='plugin.omp-stats.dashboard'] .os-btn:hover {
+	background: var(--l2);
+}
+[data-surface='plugin.omp-stats.dashboard'] .os-btn.on {
+	border-color: var(--accent);
+	color: var(--accent-ink);
+	background: var(--accent-fill);
+}
+
+[data-surface='plugin.omp-stats.dashboard'] .os-kpis {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 10px;
+}
+[data-surface='plugin.omp-stats.dashboard'] .os-kpi {
+	flex: 1 1 150px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 10px 12px;
+	border: 1px solid var(--l2);
+	border-radius: var(--r-card);
+	background: var(--panel);
+}
+[data-surface='plugin.omp-stats.dashboard'] .os-kpi-label {
+	font-family: var(--sans);
+	font-size: 11px;
+	color: var(--t3);
+}
+[data-surface='plugin.omp-stats.dashboard'] .os-kpi-value {
+	font-family: var(--mono);
+	font-size: 20px;
+	font-weight: 600;
+	color: var(--t1);
+}
+[data-surface='plugin.omp-stats.dashboard'] .os-kpi-detail {
+	font-family: var(--sans);
+	font-size: 11px;
+}
+
+[data-surface='plugin.omp-stats.dashboard'] .os-grid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+[data-surface='plugin.omp-stats.dashboard'] .os-grid > .os-panel {
+	flex: 1 1 280px;
+}
+[data-surface='plugin.omp-stats.dashboard'] .os-panel {
+	margin-bottom: 10px;
+}
