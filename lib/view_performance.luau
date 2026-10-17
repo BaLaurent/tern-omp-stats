@@ -2,10 +2,12 @@
 -- Performance tab: latency, output speed and prompt-cache efficiency, overall and per model.
 
 local fmt = require("./fmt")
+local i18n = require("./i18n")
 local parts = require("./parts")
 local ranges = require("./ranges")
 
 local ui = tern.ui
+local t = i18n.t
 
 local view = {}
 
@@ -26,17 +28,17 @@ function view.render(d: { [string]: { any } }, r: ranges.Range, _cols: number): 
 	local all = parts.first(d, "total")
 	local req = fmt.num(all.req)
 	if req == 0 then
-		return parts.empty("Aucune requête omp sur cette période.")
+		return parts.empty(t("empty_requests"))
 	end
 	local hit = parts.cache_hit(fmt.num(all.cr), fmt.num(all.inp), fmt.num(all.cw))
 	local saved = fmt.num(all.nc) - fmt.num(all.cc)
 	local tiles = {
-		parts.kpi("TTFT moyen", fmt.ms(avg(all.ttft)), { "délai avant le 1er token" }),
-		parts.kpi("Durée moyenne", fmt.ms(avg(all.dur))),
-		parts.kpi("Débit", fmt.rate(speed(all)), { "tokens de sortie / s" }),
-		parts.kpi("Cache hit", fmt.pct(hit)),
-		parts.kpi("Économie du cache", fmt.money(saved), { "vs prompt sans cache" }),
-		parts.kpi("Requêtes", fmt.count(req)),
+		parts.kpi(t("kpi_ttft"), fmt.ms(avg(all.ttft)), { t("kpi_ttft_detail") }),
+		parts.kpi(t("kpi_duration"), fmt.ms(avg(all.dur))),
+		parts.kpi(t("kpi_speed"), fmt.rate(speed(all)), { t("kpi_speed_detail") }),
+		parts.kpi(t("kpi_cache_hit"), fmt.pct(hit)),
+		parts.kpi(t("kpi_cache_saving"), fmt.money(saved), { t("kpi_cache_saving_detail") }),
+		parts.kpi(t("kpi_requests"), fmt.count(req)),
 	}
 
 	local rows: { { Cell } } = {}
@@ -54,19 +56,18 @@ function view.render(d: { [string]: { any } }, r: ranges.Range, _cols: number): 
 		))
 	end
 	local cols: { Col } = {
-		{ id = "model", head = "Modèle", grow = 1, priority = 5 },
-		{ id = "req", head = "Req.", align = "end", priority = 4 },
-		{ id = "ttft", head = "TTFT", align = "end", priority = 5 },
-		{ id = "dur", head = "Durée", align = "end", priority = 3 },
-		{ id = "tps", head = "Débit", align = "end", priority = 4 },
-		{ id = "hit", head = "Cache hit", priority = 2 },
-		{ id = "saved", head = "Économie", align = "end", priority = 1 },
+		{ id = "model", head = t("col_model"), grow = 1, priority = 5 },
+		{ id = "req", head = t("col_req"), align = "end", priority = 4 },
+		{ id = "ttft", head = t("col_ttft"), align = "end", priority = 5 },
+		{ id = "dur", head = t("col_duration"), align = "end", priority = 3 },
+		{ id = "tps", head = t("col_speed"), align = "end", priority = 4 },
+		{ id = "hit", head = t("col_cache_hit"), priority = 2 },
+		{ id = "saved", head = t("col_saving"), align = "end", priority = 1 },
 	}
-	local trend_head = if r.unit == "hour" then "par heure" else "par jour"
 	return ui.col({
 		parts.kpis(tiles),
-		parts.panel(`TTFT moyen {trend_head}`, { parts.trend(r, parts.get(d, "series"), "ttft", fmt.ms) }),
-		parts.panel("Par modèle", { parts.table(cols, rows, "Aucune requête omp sur cette période.") }),
+		parts.panel(i18n.tf("ttft_per", parts.per(r)), { parts.trend(r, parts.get(d, "series"), "ttft", fmt.ms) }),
+		parts.panel(t("panel_per_model"), { parts.table(cols, rows, t("empty_requests")) }),
 	})
 end
 

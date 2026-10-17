@@ -3,15 +3,15 @@
 -- Windows are calendar-aligned (local midnight / local hour) so buckets match what the user sees;
 -- the previous window is the same length, immediately before the current one.
 
-export type Range = { id: string, label: string, key: string, unit: "hour" | "day", n: number }
+export type Range = { id: string, key: string, unit: "hour" | "day", n: number }
 
 local ranges = {}
 
 ranges.list = {
-	{ id = "24h", label = "24 h", key = "1", unit = "hour", n = 24 },
-	{ id = "7d", label = "7 j", key = "2", unit = "day", n = 7 },
-	{ id = "30d", label = "30 j", key = "3", unit = "day", n = 30 },
-	{ id = "90d", label = "90 j", key = "4", unit = "day", n = 90 },
+	{ id = "24h", key = "1", unit = "hour", n = 24 },
+	{ id = "7d", key = "2", unit = "day", n = 7 },
+	{ id = "30d", key = "3", unit = "day", n = 30 },
+	{ id = "90d", key = "4", unit = "day", n = 90 },
 } :: { Range }
 
 function ranges.find(id: any): Range?

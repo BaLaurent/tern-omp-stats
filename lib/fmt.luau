@@ -87,23 +87,6 @@ function fmt.rate(x: number?): string
 	return string.format("%.0f tok/s", x)
 end
 
---- Age of a timestamp: "à l'instant", "il y a 5 min".
-function fmt.ago(ms: number): string
-	local s = math.max(0, math.floor(ms / 1000))
-	if s < 60 then
-		return "à l'instant"
-	end
-	local m = math.floor(s / 60)
-	if m < 60 then
-		return `il y a {m} min`
-	end
-	local h = math.floor(m / 60)
-	if h < 48 then
-		return `il y a {h} h`
-	end
-	return `il y a {math.floor(h / 24)} j`
-end
-
 --- Change between two windows as "+12%" / "-3%"; nil when there is no base to compare to.
 function fmt.delta(cur: number, prev: number): (string?, number)
 	if prev <= 0 then

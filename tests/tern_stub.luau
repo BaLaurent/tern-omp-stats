@@ -25,6 +25,11 @@ export type Harness = {
 	-- Makes the next process result fail with this stderr.
 	fail_with: string?,
 	logs: { string },
+	-- The plugin's `tern.kv` store, and the palette commands its window half registered (by id).
+	kv: { [string]: any },
+	commands: { [string]: any },
+	-- A plugin module by path under the plugin root ("lib/parts"), sharing the block's runtime and cache.
+	require: (path: string) -> any,
 }
 
 local function nodes()
@@ -65,7 +70,8 @@ function stub.loader(root: string, tern: any)
 end
 
 --- Runs host.luau under the stub with `home` as $HOME. `panes` is the live pane list.
-function stub.host(root: string, home: string, panes: { { pane: number } }): Harness
+function stub.host(root: string, home: string, panes: { { pane: number } }, locale: string?): Harness
+	local locale = locale or "fr_FR.UTF-8"
 	local timers: { { ms: number, fire: () -> () } } = {}
 	local held: { () -> () } = {}
 	local h: Harness = {
@@ -78,6 +84,11 @@ function stub.host(root: string, home: string, panes: { { pane: number } }): Har
 		release = function() end,
 		fail_with = nil,
 		logs = {},
+		kv = {},
+		commands = {},
+		require = function(): any
+			return nil
+		end,
 	}
 	local tern = {
 		ui = nodes(),
@@ -87,7 +98,21 @@ function stub.host(root: string, home: string, panes: { { pane: number } }): Har
 			end,
 		},
 		getenv = function(name: string): string?
-			return if name == "HOME" then home else nil
+			if name == "HOME" then
+				return home
+			end
+			return if name == "LANG" then locale else nil
+		end,
+		kv = {
+			get = function(key: string): any
+				return h.kv[key]
+			end,
+			set = function(key: string, value: any)
+				h.kv[key] = value
+			end,
+		},
+		command = function(def: any)
+			h.commands[def.id] = def
 		end,
 		fs = {
 			exists = function(path: string): boolean
@@ -196,6 +221,10 @@ function stub.host(root: string, home: string, panes: { { pane: number } }): Har
 	end
 	local load = stub.loader(root, tern)
 	load(root .. "/host.luau")
+	load(root .. "/window.luau")
+	h.require = function(path: string): any
+		return load(root .. "/" .. path .. ".luau")
+	end
 	return h
 end
 

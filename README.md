@@ -7,20 +7,19 @@ without leaving the terminal.
 
 ![Overview: cost, requests, tokens, error rate and cache, with cost and request trends](docs/overview.png)
 
-The interface is in French.
-
 ## Tabs
 
-| Tab | Shows |
+| Tab (French) | Shows |
 |---|---|
-| Vue d'ensemble | Cost, requests, tokens, prompts, error rate, cache hit and saving, each against the previous period; cost and request trends; token mix |
-| Modèles | Per model and provider: requests, tokens, cost, share of cost, errors |
-| Projets | Per project directory and per agent type (main / subagent / advisor) |
+| Overview (Vue d'ensemble) | Cost, requests, tokens, prompts, error rate, cache hit and saving, each against the previous period; cost and request trends; token mix |
+| Models (Modèles) | Per model and provider: requests, tokens, cost, share of cost, errors |
+| Projects (Projets) | Per project directory and per agent type (main / subagent / advisor) |
 | Performance | TTFT, duration, output speed, cache hit and saving; TTFT trend; per model |
-| Outils | Calls and failure rate per tool |
+| Tools (Outils) | Calls and failure rate per tool |
 | Sessions | Most recently active sessions: start, project, duration, requests, cost, models |
 
-Periods: 24 h, 7 j, 30 j, 90 j. Windows are calendar-aligned, and "previous period" is the same length right before.
+Periods: 24 h, 7 d, 30 d, 90 d (7 j, 30 j, 90 j in French). Windows are calendar-aligned, and "previous period" is the
+same length right before.
 
 ![Models: cost per model with its share](docs/models.png)
 ![Performance: latency, speed and cache efficiency](docs/performance.png)
@@ -41,9 +40,19 @@ tern plugin link ./tern-omp-stats      # then: command palette → "OMP Stats"
 
 `tern plugin link` uses the plugin where it is; `tern plugin unlink omp-stats` removes it.
 
-Keys: `1`–`4` period, `←`/`→` (or `h`/`l`, `Tab`) tab, `r` refresh. Click works on every tab and period button.
-The active tab refreshes every 30 s; the other tabs keep their last data and refresh when selected. The chosen tab and
-period are restored when Tern restarts.
+Keys: `1`–`4` period, `←`/`→` (or `h`/`l`, `Tab`) tab, `r` refresh, `g` language. Click works on every tab, period and
+the `FR`/`EN` button. The active tab refreshes every 30 s; the other tabs keep their last data and refresh when
+selected. The chosen tab and period are restored when Tern restarts.
+
+## Language
+
+The interface is available in English and French. Without a saved choice it follows the locale (`fr*` gives French,
+anything else English). Switch with the **Switch language (FR/EN)** command in the command palette, the `FR`/`EN`
+button in the block's bar, or the `g` key. The choice is saved in the plugin's `tern.kv` and shared by the block and the
+palette command; the command also redraws every open OMP Stats block. The `FR`/`EN` button and the `g` key change the
+language for the block you use, and other open blocks pick it up on their next refresh (within 30 s).
+
+![The same overview in French](docs/overview-fr.png)
 
 ## How it reads the data
 

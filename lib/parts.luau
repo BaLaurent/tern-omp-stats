@@ -2,6 +2,7 @@
 -- Building blocks shared by the tab views: KPI tiles, panels, tables and charts on top of `tern.ui`.
 
 local fmt = require("./fmt")
+local i18n = require("./i18n")
 local ranges = require("./ranges")
 
 local ui = tern.ui
@@ -31,6 +32,33 @@ function parts.window(rows: { any }?, which: number): { [string]: any }
 	return {}
 end
 
+--- The period as shown on its button and in the pane title: "7 d" / "7 j".
+function parts.period(r: ranges.Range): string
+	return `{r.n} {i18n.t(if r.unit == "hour" then "unit_hour" else "unit_day")}`
+end
+
+--- "per hour" / "per day" for the period's bucket size (and its French counterparts).
+function parts.per(r: ranges.Range): string
+	return i18n.t(if r.unit == "hour" then "per_hour" else "per_day")
+end
+
+--- Age of a timestamp: "just now", "5 min ago".
+function parts.ago(ms: number): string
+	local s = math.max(0, math.floor(ms / 1000))
+	if s < 60 then
+		return i18n.t("ago_now")
+	end
+	local m = math.floor(s / 60)
+	if m < 60 then
+		return i18n.tf("ago_min", m)
+	end
+	local h = math.floor(m / 60)
+	if h < 48 then
+		return i18n.tf("ago_hour", h)
+	end
+	return i18n.tf("ago_day", math.floor(h / 24))
+end
+
 --- A change against the previous window, as a span. `bad_up`: an increase is bad news (errors).
 function parts.delta(cur: number, prev: number, bad_up: boolean?): Span?
 	local text, dir = fmt.delta(cur, prev)
@@ -41,7 +69,7 @@ function parts.delta(cur: number, prev: number, bad_up: boolean?): Span?
 	if dir ~= 0 and bad_up then
 		tone = if dir > 0 then "error" else "success"
 	end
-	return ui.span(text .. " vs période préc.", tone)
+	return ui.span(text .. " " .. i18n.t("vs_previous"), tone)
 end
 
 --- A tile: label, big value, optional detail spans.
@@ -95,9 +123,9 @@ function parts.trend(r: ranges.Range, rows: { any }, field: string, show: (numbe
 			peak_at, peak = i, value
 		end
 	end
-	local caption = "aucune donnée sur la période"
+	local caption = i18n.t("no_data")
 	if peak_at > 0 then
-		caption = `{series[1][1]} → {series[#series][1]}  ·  pic {show(peak)} ({series[peak_at][1]})`
+		caption = `{series[1][1]} → {series[#series][1]}  ·  {i18n.t("peak")} {show(peak)} ({series[peak_at][1]})`
 	end
 	return ui.col({ ui.bars(series), ui.text({ ui.span(caption, "muted") }) })
 end

@@ -168,3 +168,85 @@ table.remove(panes, 1)
 h6.flush()
 check.eq(state6.cache, {}, "closed pane: nothing loaded")
 fixture.remove(gone)
+
+-- Language: the block switches with `g`, the palette command (window half) switches it and tells open blocks.
+local lhome = fixture.home()
+local lh = stub.host(ROOT, lhome, { { pane = 1 } }) -- French locale
+local ldef = lh.blocks.dashboard
+local lcx = { pane = 1, cols = 120, rows = 40, render = function() end, save = function() end }
+local lstate = ldef.init(lcx, {}, nil)
+lh.flush()
+local french = shown(ldef, lstate, lcx)
+check.has(french, "Vue d'ensemble", "French by locale")
+check.has(french, "Coût", "French KPIs")
+check.has(french, "g langue", "the footer names the language key")
+check.eq(ldef.key(lstate, key("g"), lcx), true, "g is handled")
+lh.flush()
+check.eq(lh.kv.lang, "en", "g saves the new language")
+local english = shown(ldef, lstate, lcx)
+check.has(english, "OMP Stats · Overview · 7 d", "English pane title and period")
+check.has(english, "Cost", "English KPIs")
+check.has(english, "vs prev. period", "English deltas")
+check.has(english, "latest omp request", "English footer")
+check.has(english, "g language", "English key hints")
+
+-- Every tab and period shows one language only: words of the other language never appear.
+local FRENCH = { "Appels", "Coût", "Requêtes", "Taux", "Outils", "Durée", "Débit", "Entrée", "Sortie", "Projet", "Début", "Économie", "économie", "Chargement", "Aucun", "Dernière", "période", "Modèle", "actualis", "langue" }
+local ENGLISH = { "Cost", "Calls", "Requests", "Failure", "Duration", "Speed", "Input", "Output", "Share", "Project", "Start", "Saving", "saved $", "Loading", "No omp", "Last req", "period", "Avg", "refreshing", "language" }
+local function sweep(words: { string }, label: string)
+	for _, range in { "24h", "7d", "30d", "90d" } do
+		for _, tab in { "overview", "models", "projects", "performance", "tools", "sessions" } do
+			ldef.event(lstate, { ev = "action", act = "range", value = range }, lcx)
+			ldef.event(lstate, { ev = "action", act = "tab", value = tab }, lcx)
+			lh.flush()
+			local page = shown(ldef, lstate, lcx)
+			for _, word in words do
+				check.lacks(page, word, `{label} {tab} {range}`)
+			end
+		end
+	end
+end
+sweep(FRENCH, "English")
+check.eq(#lh.logs, 0, "every tab renders in English")
+ldef.event(lstate, { ev = "action", act = "lang", value = "toggle" }, lcx) -- the button
+lh.flush()
+check.eq(lh.kv.lang, "fr", "the button toggles back")
+sweep(ENGLISH, "French")
+check.eq(#lh.logs, 0, "every tab renders in French")
+
+local toasts: { string } = {}
+local told: { { any } } = {}
+local wcx = {
+	toast = function(_: any, _level: string, text: string)
+		table.insert(toasts, text)
+	end,
+	session = {
+		panes = function()
+			return {
+				{ pane = 1, title = "OMP Stats · Vue d'ensemble · 7 j" },
+				{ pane = 2, kind = "terminal", title = "OMP Stats notes" },
+				{ pane = 3, title = "Tracker" },
+			}
+		end,
+		event = function(_: any, pane: number, ev: any)
+			table.insert(told, { pane, ev.act })
+		end,
+	},
+}
+check.eq(lh.commands.lang.title, "Changer de langue (FR/EN)", "palette command in French")
+lh.commands.lang.run(wcx)
+check.eq(lh.kv.lang, "en", "the command switches the saved language")
+check.eq({ toasts[1], told }, { "Language: English", { { 1, "lang" } } }, "toast, and only the OMP Stats block is told")
+check.eq(lh.commands.lang.title, "Switch language (FR/EN)", "palette command re-registered in English")
+ldef.event(lstate, { ev = "action", act = "lang" }, lcx) -- what the block receives
+lh.flush()
+check.eq(lh.kv.lang, "en", "the notification redraws without toggling again")
+check.has(shown(ldef, lstate, lcx), "Sessions", "block shows the new language")
+fixture.remove(lhome)
+
+-- Without a saved choice the locale decides: fr* is French, anything else English.
+local locales = { { "fr_FR.UTF-8", "fr" }, { "fr_BE", "fr" }, { "en_US.UTF-8", "en" }, { "C", "en" }, { "de_DE", "en" } }
+for _, pair in locales do
+	local lang = stub.host(ROOT, "/nonexistent", {}, pair[1]).require("lib/i18n").lang()
+	check.eq(lang, pair[2], `locale {pair[1]}`)
+end

@@ -6,7 +6,8 @@
 -- switching back shows the last data at once while a fresh query runs.
 
 local db = require("./lib/db")
-local fmt = require("./lib/fmt")
+local i18n = require("./lib/i18n")
+local parts = require("./lib/parts")
 local queries = require("./lib/queries")
 local ranges = require("./lib/ranges")
 
@@ -16,18 +17,18 @@ local POLL_MS = 30 * 1000
 
 type Tab = {
 	id: string,
-	label: string,
+	label_key: string,
 	queries: (ranges.Range) -> queries.Queries,
 	render: ({ [string]: { any } }, ranges.Range, number) -> Node,
 }
 
 local TABS: { Tab } = {
-	{ id = "overview", label = "Vue d'ensemble", queries = queries.overview, render = require("./lib/view_overview").render },
-	{ id = "models", label = "Modèles", queries = queries.models, render = require("./lib/view_models").render },
-	{ id = "projects", label = "Projets", queries = queries.projects, render = require("./lib/view_projects").render },
-	{ id = "performance", label = "Performance", queries = queries.performance, render = require("./lib/view_performance").render },
-	{ id = "tools", label = "Outils", queries = queries.tools, render = require("./lib/view_tools").render },
-	{ id = "sessions", label = "Sessions", queries = queries.sessions, render = require("./lib/view_sessions").render },
+	{ id = "overview", label_key = "tab_overview", queries = queries.overview, render = require("./lib/view_overview").render },
+	{ id = "models", label_key = "tab_models", queries = queries.models, render = require("./lib/view_models").render },
+	{ id = "projects", label_key = "tab_projects", queries = queries.projects, render = require("./lib/view_projects").render },
+	{ id = "performance", label_key = "tab_performance", queries = queries.performance, render = require("./lib/view_performance").render },
+	{ id = "tools", label_key = "tab_tools", queries = queries.tools, render = require("./lib/view_tools").render },
+	{ id = "sessions", label_key = "tab_sessions", queries = queries.sessions, render = require("./lib/view_sessions").render },
 }
 
 type State = {
@@ -86,7 +87,7 @@ local function load(state: State, quiet: boolean?)
 	local key = key_of(state)
 	local tab, range = TABS[state.tab], state.range
 	if not db.exists() then
-		state.err = `Base introuvable : {db.path()}. Lancez une fois « omp stats » pour la créer.`
+		state.err = i18n.tf("db_missing", db.path())
 		state.loading = false
 		if not quiet then
 			state.cx:render()
@@ -168,17 +169,18 @@ end
 local function header(state: State): Node
 	local tabs: { Node } = {}
 	for i, tab in TABS do
-		table.insert(tabs, button(tab.label, "tab=" .. tab.id, i == state.tab))
+		table.insert(tabs, button(i18n.t(tab.label_key), "tab=" .. tab.id, i == state.tab))
 	end
 	local periods: { Node } = {}
 	for _, r in ranges.list do
-		table.insert(periods, button(r.label, "range=" .. r.id, r == state.range))
+		table.insert(periods, button(parts.period(r), "range=" .. r.id, r == state.range))
 	end
 	return ui.el("div", { class = "os-bar" }, {
 		ui.el("span", { class = "os-title", text = "OMP Stats" }),
 		ui.el("div", { class = "os-group" }, tabs),
 		ui.el("div", { class = "os-group" }, periods),
 		button("↻", "refresh=1", false),
+		button(i18n.t("lang_button"), "lang=toggle", false),
 	})
 end
 
@@ -190,26 +192,26 @@ local function body(state: State, cols: number): Node
 			return node :: Node
 		end
 		tern.log.error("omp-stats render failed", tostring(node))
-		return ui.text({ ui.span("Affichage impossible : " .. tostring(node), "error") })
+		return ui.text({ ui.span(i18n.tf("render_failed", tostring(node)), "error") })
 	end
 	if state.err then
 		return ui.text({ ui.span(state.err, "error") })
 	end
-	return ui.progress(nil, "Chargement des statistiques…")
+	return ui.progress(nil, i18n.t("loading"))
 end
 
 local function footer(state: State): Node
 	local spans: { Span | string } = {}
 	if state.loading then
-		table.insert(spans, ui.span("⟳ actualisation  ·  ", "muted"))
+		table.insert(spans, ui.span(i18n.t("refreshing") .. "  ·  ", "muted"))
 	end
 	if state.err and state.cache[key_of(state)] then
-		table.insert(spans, ui.span("dernière actualisation en échec : " .. state.err .. "  ·  ", "error"))
+		table.insert(spans, ui.span(i18n.tf("refresh_failed", state.err) .. "  ·  ", "error"))
 	end
 	if state.last_ts and state.db_now then
-		table.insert(spans, ui.span("dernière requête omp " .. fmt.ago(state.db_now - state.last_ts) .. "  ·  ", "muted"))
+		table.insert(spans, ui.span(i18n.tf("last_request", parts.ago(state.db_now - state.last_ts)) .. "  ·  ", "muted"))
 	end
-	table.insert(spans, ui.span("1-4 période  ←/→ onglet  r actualiser", "muted"))
+	table.insert(spans, ui.span(i18n.t("hints"), "muted"))
 	return ui.col({ ui.text(spans) })
 end
 
@@ -253,7 +255,7 @@ tern.block.define("dashboard", {
 	end,
 
 	title = function(state: State): string?
-		return `OMP Stats · {TABS[state.tab].label} · {state.range.label}`
+		return `OMP Stats · {i18n.t(TABS[state.tab].label_key)} · {parts.period(state.range)}`
 	end,
 
 	key = function(state: State, key: Key, _cx: BlockCx): boolean?
@@ -271,6 +273,9 @@ tern.block.define("dashboard", {
 		elseif name == "left" or name == "h" then
 			select_tab(state, state.tab - 1)
 		elseif name == "r" or name == "f5" then
+			load(state)
+		elseif name == "g" then
+			i18n.toggle()
 			load(state)
 		else
 			return false
@@ -291,6 +296,12 @@ tern.block.define("dashboard", {
 		elseif ev.act == "range" and type(value) == "string" then
 			select_range(state, value)
 		elseif ev.act == "refresh" then
+			load(state)
+		elseif ev.act == "lang" then
+			-- The button toggles; the palette command (window half) has already changed the saved language.
+			if value == "toggle" then
+				i18n.toggle()
+			end
 			load(state)
 		else
 			return

@@ -2,10 +2,12 @@
 -- Models tab: one row per model and provider, with its share of the cost.
 
 local fmt = require("./fmt")
+local i18n = require("./i18n")
 local parts = require("./parts")
 local ranges = require("./ranges")
 
 local ui = tern.ui
+local t = i18n.t
 
 local view = {}
 
@@ -27,16 +29,16 @@ function view.render(d: { [string]: { any } }, _r: ranges.Range, _cols: number):
 		))
 	end
 	local cols: { Col } = {
-		{ id = "model", head = "Modèle", grow = 1, priority = 5 },
-		{ id = "provider", head = "Provider", priority = 1 },
-		{ id = "req", head = "Req.", align = "end", priority = 4 },
-		{ id = "tot", head = "Tokens", align = "end", priority = 3 },
-		{ id = "cr", head = "Cache lu", align = "end", priority = 1 },
-		{ id = "cost", head = "Coût", align = "end", priority = 5 },
-		{ id = "share", head = "Part", priority = 2 },
-		{ id = "err", head = "Err.", align = "end", priority = 2 },
+		{ id = "model", head = t("col_model"), grow = 1, priority = 5 },
+		{ id = "provider", head = t("col_provider"), priority = 1 },
+		{ id = "req", head = t("col_req"), align = "end", priority = 4 },
+		{ id = "tot", head = t("col_tokens"), align = "end", priority = 3 },
+		{ id = "cr", head = t("col_cache_read"), align = "end", priority = 1 },
+		{ id = "cost", head = t("col_cost"), align = "end", priority = 5 },
+		{ id = "share", head = t("col_share"), priority = 2 },
+		{ id = "err", head = t("col_err"), align = "end", priority = 2 },
 	}
-	return parts.panel("Modèles", { parts.table(cols, rows, "Aucune requête omp sur cette période.") })
+	return parts.panel(t("panel_models"), { parts.table(cols, rows, t("empty_requests")) })
 end
 
 return view

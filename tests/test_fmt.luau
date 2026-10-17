@@ -9,7 +9,6 @@ check.eq({ fmt.money(-0.01), fmt.money(-0.001), fmt.money(-1500) }, { "-$0.01", 
 check.eq({ fmt.pct(0.1234), fmt.pct(nil) }, { "12.3%", "—" }, "percentages")
 check.eq({ fmt.ms(420), fmt.ms(3400), fmt.ms(nil) }, { "420 ms", "3.4 s", "—" }, "milliseconds")
 check.eq({ fmt.span(45000), fmt.span(720000), fmt.span(11100000) }, { "45 s", "12 min", "3 h 05" }, "durations")
-check.eq({ fmt.ago(10000), fmt.ago(300000), fmt.ago(3 * 3600000), fmt.ago(72 * 3600000) }, { "à l'instant", "il y a 5 min", "il y a 3 h", "il y a 3 j" }, "ages")
 
 local text, dir = fmt.delta(150, 100)
 check.eq({ text, dir }, { "+50%", 1 }, "increase")
